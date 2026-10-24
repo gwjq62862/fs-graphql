@@ -111,13 +111,30 @@ type Book {
     bookCount:Int
     born:Int
     }
+
+    
+
   type Query {
     dummy: Int
    bookCount:Int
   authorCount:Int
-   allBooks(author:String): [Book]!
+   allBooks(author:String,genre:String): [Book]!
    allAuthors:[Author]!
 
+  }
+
+  type Mutation {
+  addBook(
+   title: String!
+    author:String!
+    published:Int!
+    genres: [String!]!
+  ):Book!
+
+  editAuthor(
+    name: String!
+    setBornTo: Int!
+  ): Author
   }
 `
 
@@ -126,13 +143,18 @@ const resolvers = {
     dummy: () => 0,
     bookCount: () => books.length,
     authorCount: () => authors.length,
-    allBooks: (_, { author }) => {
-      if (author) {
-        const data = books.filter((v) => v.author === author)
-        return data
+    allBooks: (_, { author, genre }) => {
+      if (!author && !genre) return books;
+
+      if (author && genre) {
+        return books.filter(b => b.author === author && b.genres.includes(genre));
       }
-      return books
+
+      return author
+        ? books.filter(b => b.author === author)
+        : books.filter(b => b.genres.includes(genre));
     },
+
     allAuthors: () => {
       return authors.map((v) => ({
         name: v.name,
@@ -141,7 +163,34 @@ const resolvers = {
       }))
 
     }
+
+
   },
+
+  Mutation: {
+    addBook: (_, { title, author, published, genres }) => {
+      const newBook = {
+        title,
+        author,
+        published,
+        genres,
+        id: crypto.randomUUID()
+      }
+
+      books.push(newBook)
+
+      return newBook
+
+    },
+    editAuthor(root, { name, setBornTo }) {
+      const author = authors.find((v) => v.name === name)
+      if (!author) {
+        return null
+      }
+      author.born=setBornTo
+      return author
+    }
+  }
 }
 
 const server = new ApolloServer({
