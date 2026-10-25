@@ -1,8 +1,20 @@
+import { useQuery } from '@apollo/client/react'
+import { ALL_AUTHORS } from '../query/query'
+
 const Authors = (props) => {
+  const result = useQuery(ALL_AUTHORS)
+
+ const authors = result.data?.allAuthors ?? []
   if (!props.show) {
     return null
   }
-  const authors = []
+
+  if (result.loading) {
+    return (
+      <div>loading ...</div>
+    )
+  }
+
 
   return (
     <div>
@@ -15,7 +27,7 @@ const Authors = (props) => {
             <th>books</th>
           </tr>
           {authors.map((a) => (
-            <tr key={a.id}>
+            <tr key={a.name}>
               <td>{a.name}</td>
               <td>{a.born}</td>
               <td>{a.bookCount}</td>
